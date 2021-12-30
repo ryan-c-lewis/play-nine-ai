@@ -6,13 +6,16 @@ namespace PlayNine
     {
         private static Random _random = new Random();
         
-        public bool InitialFlipIsPair { get; set; }
+        public double FlipPairToStart { get; set; } // 0.0 - 1.0
+        public bool DoFlipPairToStart => _random.NextDouble() < FlipPairToStart;
+        
+        public int UpperThresholdForConsideringACardLow { get; set; } // 0 - 12
 
         public static PlayerStrategyConfiguration Random()
         {
             return new PlayerStrategyConfiguration
             {
-                InitialFlipIsPair = _random.Next(2) == 1
+                FlipPairToStart = _random.NextDouble()
             };
         }
     }

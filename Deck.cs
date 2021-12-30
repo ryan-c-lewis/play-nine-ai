@@ -45,6 +45,11 @@ namespace PlayNine
             return card;
         }
 
+        public void AddToTop(Card card)
+        {
+            _cards.Push(card);
+        }
+
         private void ShuffleDiscardIntoDeck()
         {
             Card topOfDiscard = _discardedCards.Pop();

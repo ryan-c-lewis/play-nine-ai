@@ -1,9 +1,33 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 
 namespace PlayNine
 {
+    public class GameForTests : Game
+    {
+        public GameForTests(List<Player> players) : base(players, false)
+        {
+        }
+
+        public void SetDiscardValue(int value)
+        {
+            _deck.RemoveTopOfDiscard();
+            var cardToInsert = new Card(value);
+            cardToInsert.Flip();
+            _deck.AddToDiscard(cardToInsert);
+        }
+        
+        public void SetNextDeckValue(int value)
+        {
+            _deck.DiscardTop();
+            _deck.RemoveTopOfDiscard();
+            var cardToInsert = new Card(value);
+            _deck.AddToTop(cardToInsert);
+        }
+    }
+    
     [TestFixture]
     public class Tests
     {
@@ -12,6 +36,17 @@ namespace PlayNine
             List<Card> cards = values.Select(x => new Card(x)).ToList();
             cards.ForEach(x => x.Flip());
             return new Hand(cards);
+        }
+
+        private Decision DecideForScenario(PlayerStrategyConfiguration strategyConfiguration, 
+            Hand hand, int discardValue, int nextValue)
+        {
+            Player player = new Player("TEST", strategyConfiguration);
+            var game = new GameForTests(new List<Player> {player});
+            player.SetHand(hand);
+            game.SetDiscardValue(discardValue);
+            game.SetNextDeckValue(nextValue);
+            return game.MakeDecision(player, false);
         }
         
         [Test]
@@ -52,7 +87,7 @@ namespace PlayNine
         [Test]
         public void Strategy_InitialFlipIsPair_false()
         {
-            var variableStrategy = new PlayerStrategyConfiguration {InitialFlipIsPair = false};
+            var variableStrategy = new PlayerStrategyConfiguration {FlipPairToStart = 0.0};
             Player variablePlayer = new Player("TEST", variableStrategy);
             var game = new Game(new List<Player> {variablePlayer}, false);
             Assert.IsTrue(variablePlayer.Hand.Cards[0].IsFaceUp);
@@ -62,11 +97,26 @@ namespace PlayNine
         [Test]
         public void Strategy_InitialFlipIsPair_true()
         {
-            var variableStrategy = new PlayerStrategyConfiguration {InitialFlipIsPair = true};
+            var variableStrategy = new PlayerStrategyConfiguration {FlipPairToStart = 1.0};
             Player variablePlayer = new Player("TEST", variableStrategy);
             var game = new Game(new List<Player> {variablePlayer}, false);
             Assert.IsTrue(variablePlayer.Hand.Cards[0].IsFaceUp);
             Assert.IsTrue(variablePlayer.Hand.Cards[4].IsFaceUp);
+        }
+        
+        [Test]
+        public void Strategy_UpperThresholdForConsideringACardLow()
+        {
+            var strategy = new PlayerStrategyConfiguration {UpperThresholdForConsideringACardLow = 3};
+            Hand hand = Hand.Parse(
+                "1   1   ?   ?" + Environment.NewLine +
+                "?   ?   ?   ?");
+            Decision result = DecideForScenario(strategy, hand, 2, 0);
+            Assert.IsTrue(result.IsReplaceWithFaceUpKnown);
+            result = DecideForScenario(strategy, hand, 3, 0);
+            Assert.IsTrue(result.IsReplaceWithFaceUpKnown);
+            result = DecideForScenario(strategy, hand, 4, 0);
+            Assert.IsFalse(result.IsReplaceWithFaceUpKnown);
         }
     }
 }

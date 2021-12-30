@@ -6,9 +6,9 @@ namespace PlayNine
 {
     public class Game
     {
-        private readonly bool _print;
-        private readonly Deck _deck;
-        private readonly List<Player> _players;
+        protected readonly bool _print;
+        protected readonly Deck _deck;
+        protected readonly List<Player> _players;
         
         public Game(List<Player> players, bool print)
         {
@@ -27,23 +27,21 @@ namespace PlayNine
             _deck.DiscardTop();
         }
 
-        public void Play(int turnsToPlay = -1)
+        public void Play()
         {
-            int totalTurns = 0;
             int playerIndex = 0;
             int numberOfPlayersFinished = 0;
             while (true)
             {
-                TurnReferee referee = new TurnReferee(_deck, _players[playerIndex]);
-                Decision decision = _players[playerIndex].TakeTurn(referee, numberOfPlayersFinished > 0);
-                referee.HandleDecision(decision);
-                
-                if (numberOfPlayersFinished > 0)
-                    _players[playerIndex].Hand.Cards.ForEach(x => x.Flip());
-                
-                PrintPlayer(_players[playerIndex]);
+                Player currentPlayer = _players[playerIndex];
+                MakeDecision(currentPlayer, numberOfPlayersFinished > 0);
 
-                bool thisPlayerIsFinished = _players[playerIndex].Hand.IsFinished();
+                if (numberOfPlayersFinished > 0)
+                    currentPlayer.Hand.Cards.ForEach(x => x.Flip());
+                
+                PrintPlayer(currentPlayer);
+
+                bool thisPlayerIsFinished = currentPlayer.Hand.IsFinished();
                 if (thisPlayerIsFinished)
                 {
                     numberOfPlayersFinished++;
@@ -57,12 +55,15 @@ namespace PlayNine
 
                 playerIndex++;
                 playerIndex %= _players.Count;
-
-                if (playerIndex == 0)
-                    totalTurns++;
-                if (turnsToPlay != -1 && totalTurns >= turnsToPlay)
-                    return;
             }
+        }
+
+        public Decision MakeDecision(Player player, bool isFinalRound)
+        {
+            TurnReferee referee = new TurnReferee(_deck, player);
+            Decision decision = player.TakeTurn(referee, isFinalRound);
+            referee.HandleDecision(decision);
+            return decision;
         }
 
         public Player GetWinner()

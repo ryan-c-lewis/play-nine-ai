@@ -9,7 +9,7 @@ namespace PlayNine
         public static void Main()
         {
             int numberOfPlayers = 4;
-            var variableStrategy = new PlayerStrategyConfiguration {InitialFlipIsPair = true};
+            var variableStrategy = new PlayerStrategyConfiguration {FlipPairToStart = 1.0};
             
             Player variablePlayer = new Player("TEST", variableStrategy);
             Queue<Player> players = new Queue<Player>();

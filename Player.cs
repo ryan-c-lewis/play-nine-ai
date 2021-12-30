@@ -25,7 +25,7 @@ namespace PlayNine
 
         public Tuple<int, int> GetInitialFlips()
         {
-            if (StrategyConfiguration.InitialFlipIsPair)
+            if (StrategyConfiguration.DoFlipPairToStart)
                 return new Tuple<int, int>(0, 4);
             return new Tuple<int, int>(0, 1);
         }
@@ -42,6 +42,20 @@ namespace PlayNine
                     return Decision.ReplaceWithFaceUpKnown(Hand.GetIndexOfOtherInPair(unmatchedCard));
             }
 
+            Card cardToReplace;
+            if (faceUpDiscard.Value <= StrategyConfiguration.UpperThresholdForConsideringACardLow)
+            {
+                cardToReplace = unmatchedCards.OrderByDescending(x => x.Value).FirstOrDefault();
+                if (cardToReplace != null)
+                    return Decision.ReplaceWithFaceUpKnown(Hand.GetIndexOf(cardToReplace));
+
+                cardToReplace = Hand.Cards.FirstOrDefault(x => !x.IsFaceUp);
+                if (cardToReplace != null)
+                    return Decision.ReplaceWithFaceUpKnown(Hand.GetIndexOf(cardToReplace));
+                
+                throw new Exception("How did we get here? No face down cards at all?");
+            }
+
             // Take the top of the deck and see if it will make a match
             Card faceDownFromDeck = referee.GetFaceDownFromDeck();
             foreach (Card unmatchedCard in unmatchedCards)
@@ -49,9 +63,8 @@ namespace PlayNine
                 if (faceDownFromDeck.Value == unmatchedCard.Value)
                     return Decision.ReplaceWithFaceDownUnknown(Hand.GetIndexOfOtherInPair(unmatchedCard));
             }
-
-            Card cardToReplace;
-            if (faceDownFromDeck.Value < 6)
+            
+            if (faceDownFromDeck.Value <= StrategyConfiguration.UpperThresholdForConsideringACardLow)
             {
                 cardToReplace = unmatchedCards.OrderByDescending(x => x.Value).FirstOrDefault();
                 if (cardToReplace != null)

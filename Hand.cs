@@ -10,6 +10,31 @@ namespace PlayNine
         // 4 5 6 7
         public List<Card> Cards { get; }
 
+        public static Hand Parse(string input)
+        {
+            List<Card> cards = new List<Card>();
+            foreach (string part in input.Split(' ', '\n'))
+            {
+                string cleanPart = part.Trim();
+                if (string.IsNullOrEmpty(cleanPart))
+                    continue;
+                
+                if (cleanPart == "?")
+                {
+                    Card card = new Card(1);
+                    cards.Add(card);
+                }
+                else
+                {
+                    Card card = new Card(int.Parse(cleanPart));
+                    card.Flip();
+                    cards.Add(card);
+                }
+            }
+            
+            return new Hand(cards);
+        }
+
         public Hand(List<Card> cards)
         {
             if (cards.Count != 8)
