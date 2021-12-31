@@ -99,24 +99,36 @@ namespace PlayNine
         {
             var variableStrategy = new PlayerStrategyConfiguration {FlipPairToStart = 1.0};
             Player variablePlayer = new Player("TEST", variableStrategy);
-            var game = new Game(new List<Player> {variablePlayer}, false);
+            new Game(new List<Player> {variablePlayer}, false);
             Assert.IsTrue(variablePlayer.Hand.Cards[0].IsFaceUp);
             Assert.IsTrue(variablePlayer.Hand.Cards[4].IsFaceUp);
         }
         
         [Test]
-        public void Strategy_UpperThresholdForConsideringACardLow()
+        public void Strategy_UpperThresholdForConsideringACardLow_NoPairs()
         {
             var strategy = new PlayerStrategyConfiguration {UpperThresholdForConsideringACardLow = 3};
-            Hand hand = Hand.Parse(
-                "1   1   ?   ?" + Environment.NewLine +
-                "?   ?   ?   ?");
-            Decision result = DecideForScenario(strategy, hand, 2, 0);
+            string hand = "1   1   ?   ?" + Environment.NewLine +
+                          "?   ?   ?   ?";
+            Decision result = DecideForScenario(strategy, Hand.Parse(hand), 2, 0);
             Assert.IsTrue(result.IsReplaceWithFaceUpKnown);
-            result = DecideForScenario(strategy, hand, 3, 0);
+            result = DecideForScenario(strategy, Hand.Parse(hand), 3, 0);
             Assert.IsTrue(result.IsReplaceWithFaceUpKnown);
-            result = DecideForScenario(strategy, hand, 4, 0);
+            result = DecideForScenario(strategy, Hand.Parse(hand), 4, 0);
             Assert.IsFalse(result.IsReplaceWithFaceUpKnown);
+        }
+        
+        [Test]
+        public void Strategy_UpperThresholdForConsideringACardLow_IgnoreIfMakingAPair()
+        {
+            var strategy = new PlayerStrategyConfiguration {UpperThresholdForConsideringACardLow = 3};
+            string hand = "1   6   ?   ?" + Environment.NewLine +
+                          "?   ?   ?   ?";
+            Decision result = DecideForScenario(strategy, Hand.Parse(hand), 5, 0);
+            Assert.IsFalse(result.IsReplaceWithFaceUpKnown);
+            result = DecideForScenario(strategy, Hand.Parse(hand), 6, 0);
+            Assert.IsTrue(result.IsReplaceWithFaceUpKnown);
+            Assert.AreEqual(5, result.MyCardIndex);
         }
     }
 }
